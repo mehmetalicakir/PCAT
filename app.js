@@ -1,36 +1,42 @@
 const express = require('express');
 const ejs = require('ejs');
-
+const Photo = require('./models/Photo');
+const mongoose = require('mongoose');
 const { path } = require('express/lib/application');
+const dotenv = require('dotenv');
+dotenv.config();
+const DBURL=process.env.DBURL
+
 const app = express();
+const port = 3000;
+mongoose.connect(DBURL);
+
+
 
 // Template Engine
 app.set('view engine', 'ejs');
 
-const myLogger = (req, res, next) => {
-  console.log('Middleware log 1');
-  next();
-};
-const myLogger2 = (req, res, next) => {
-  console.log('Middleware log 2');
-  next();
-};
-
 // Middlewares
 app.use(express.static('public'));
-app.use(myLogger);
-app.use(myLogger2);
-const port = 3000;
+app.use(express.urlencoded({extended:true}))
+app.use(express.json())
 
-//Toures
-app.get('/', (req, res) => {
-  res.render('index');
+//Routes
+app.get('/', async (req, res) => {
+  const photos = await Photo.find({})
+  res.render('index',{
+    photos
+  });
 });
 app.get('/about', (req, res) => {
   res.render('about');
 });
 app.get('/add', (req, res) => {
   res.render('add');
+});
+app.post('/photos', async (req, res) => {
+  await Photo.create(req.body);
+  res.redirect('/');
 });
 
 app.listen(port, () => {
