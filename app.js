@@ -3,6 +3,7 @@ const ejs = require('ejs');
 const Photo = require('./models/Photo');
 const mongoose = require('mongoose');
 const fileUpload = require('express-fileupload');
+const methodOverride = require('method-override');
 const { path } = require('express/lib/application');
 const dotenv = require('dotenv');
 const fs = require('fs');
@@ -21,6 +22,7 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(fileUpload());
+app.use(methodOverride('_method'));
 
 //Routes
 app.get('/', async (req, res) => {
@@ -58,13 +60,26 @@ app.post('/photos', async (req, res) => {
     });
 });
 
+app.get('/photos/edit/:id', async (req, res) => {
+    const photo = await Photo.findOne({ _id: req.params.id });
+    res.render('edit', {
+        photo,
+    });
+});
+
 app.get('/photo-page/:id', async (req, res) => {
-    //console.log(req.params.id);
-    //res.render('video-page');
     const photo = await Photo.findById(req.params.id);
     res.render('photo-page', {
         photo,
     });
+});
+
+app.put('/photos/:id', async (req, res) => {
+    const photo = await Photo.findOne({ _id: req.params.id });
+    photo.title = req.body.title;
+    photo.description = req.body.description;
+    photo.save();
+    res.redirect(`/photo-page/${req.params.id}`);
 });
 
 app.listen(port, () => {
